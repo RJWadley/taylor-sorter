@@ -12,6 +12,8 @@ const SingleSong: React.FC<props> = ({ track }) => {
         alt={`Album art for ${track.info.name}`}
       />
       <h1>{track.info.name}</h1>
+      <h2>{track.album.name}</h2>
+      <h3>Track number {track.info.track_number}</h3>
     </div>
   );
 };
