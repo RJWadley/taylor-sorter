@@ -5,8 +5,6 @@ type props = {
 };
 
 const SingleSong: React.FC<props> = ({ track }) => {
-  console.log(track);
-
   return (
     <div>
       <img

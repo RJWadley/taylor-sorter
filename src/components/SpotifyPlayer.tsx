@@ -26,7 +26,6 @@ const SpotifyPlayerWrapper: React.FC<props> = ({ trackToPlay }) => {
       const token = spotify.getAccessToken();
 
       const player = new SpotifyPlayer("Music Player");
-      console.log(player.scopes);
       player.connect(token);
       setPlayer(player);
     }

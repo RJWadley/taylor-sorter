@@ -33,15 +33,11 @@ const TrackManager: React.FC<props> = ({ songs }) => {
   }, [songs, srs]);
 
   useEffect(() => {
-    console.log("CURENT SONG", currentSong);
     if (!currentSong) {
-      console.log("FINDING NEXT SONG");
       //search for songs that have been seen and are due to be seen again
       const songsToReview = songs.filter((song) => {
         return srs[song.info.id]?.seen && srs[song.info.id]?.dueAt < Date.now();
       });
-
-      console.log("SONGS TO REVIEW", songsToReview);
 
       //if no songs to review, return a random unseen song
       if (songsToReview.length === 0) {
@@ -83,9 +79,6 @@ const TrackManager: React.FC<props> = ({ songs }) => {
     setVisible(!visible);
   };
 
-  window.Success = Success;
-  window.Failure = Failure;
-
   return (
     <div>
       TrackManager
@@ -93,7 +86,7 @@ const TrackManager: React.FC<props> = ({ songs }) => {
       {currentSong && <SpotifyPlayerWrapper trackToPlay={currentSong} />}
       <button onClick={toggleVisibility}>Toggle Visibility</button>
       <button onClick={Success}>GOT IT</button>
-      <button onClick={Success}>DIDN'T GOT IT</button>
+      <button onClick={Failure}>DIDN'T GOT IT</button>
     </div>
   );
 };
