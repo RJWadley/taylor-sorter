@@ -26,15 +26,20 @@ const SpotifyPlayerWrapper: React.FC<props> = ({ trackToPlay }) => {
       const token = spotify.getAccessToken();
 
       const player = new SpotifyPlayer("Music Player");
-      player.connect(token);
-      setPlayer(player);
+      player.connect(token).then(() => {
+        player.pause();
+        player.play(trackToPlay.info.id);
+        setPlayer(player);
+      });
     }
-  }, [hasPremium, spotify]);
+  }, [hasPremium, spotify, trackToPlay.info.id]);
 
   useEffect(() => {
     if (player) {
       player.pause();
-      player.play(trackToPlay.info.uri);
+      setTimeout(() => {
+        player.play(trackToPlay.info.uri);
+      }, 1000);
     }
   }, [player, trackToPlay]);
 

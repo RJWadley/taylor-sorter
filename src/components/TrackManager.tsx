@@ -61,6 +61,7 @@ const TrackManager: React.FC<props> = ({ songs }) => {
         Date.now() + steps[srs[currentSong.info.id].currentStep] * 60 * 1000;
       setCurrentSong(undefined);
       setSRS(srs);
+      setVisible(false);
     }
   };
 
@@ -72,6 +73,7 @@ const TrackManager: React.FC<props> = ({ songs }) => {
         Date.now() + steps[srs[currentSong.info.id].currentStep] * 60 * 1000;
       setCurrentSong(undefined);
       setSRS(srs);
+      setVisible(false);
     }
   };
 
