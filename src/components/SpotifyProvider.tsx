@@ -1,8 +1,8 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useState } from "react";
 import { SpotifyWebApi } from "spotify-web-api-ts";
 
 //TODO - handle token expiration
-//TODO - login in popup and save to localstorage instead of URL
+//TODO - login in popup and save to localStorage instead of URL
 
 export const SpotifyContext = createContext<{
   isInitialized: boolean;

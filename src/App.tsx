@@ -1,68 +1,35 @@
-import { SpotifyContext } from "components/SpotifyProvider";
-import TrackManager from "components/TrackManager";
-import React, { useContext, useEffect } from "react";
+import useRankingManager from "hooks/useRankingManager";
+import useTaylorSongs from "hooks/useTaylorSongs";
 import {
   SimplifiedAlbum,
   SimplifiedTrack,
 } from "spotify-web-api-ts/types/types/SpotifyObjects";
-import { dedupe } from "utils";
-
-const TAYLOR_ID = "06HL4z0CvFAxyc27GXpf02";
 
 export type DetailedTrack = {
   info: SimplifiedTrack;
   album: SimplifiedAlbum;
 };
 
-export type srs = {
-  [key: string]: {
-    currentStep: number;
-    seen: boolean;
-    dueAt: number;
-  };
-};
-
 function App() {
-  const { initializeApi, isInitialized, spotify } = useContext(SpotifyContext);
+  const songs = useTaylorSongs();
 
-  const [songs, setSongs] = React.useState<DetailedTrack[]>([]);
+  const { nextTwoItems, selectItem } = useRankingManager(
+    songs.map((song) => song.info.name)
+  );
 
-  useEffect(() => {
-    if (!isInitialized) initializeApi();
+  const [songA, songB] = nextTwoItems ?? [];
+  const songInfoA = songs.find((song) => song.info.name === songA);
+  const songInfoB = songs.find((song) => song.info.name === songB);
 
-    if (spotify) {
-      spotify.artists.getArtistAlbums(TAYLOR_ID).then((data) => {
-        data.items.forEach((album) => {
-          const currentRegion = navigator.language.split("-")[1];
-
-          //ensure album is available in current region
-          if (
-            album.available_markets === undefined ||
-            album.available_markets.includes(currentRegion)
-          ) {
-            //get album tracks
-            spotify.albums.getAlbumTracks(album.id).then((tracks) => {
-              tracks.items.forEach((info) => {
-                setSongs((prevSongs) =>
-                  dedupe([
-                    ...prevSongs,
-                    {
-                      info,
-                      album,
-                    },
-                  ])
-                );
-              });
-            });
-          }
-        });
-      });
-    }
-  }, [initializeApi, isInitialized, spotify]);
-
+  if (!songA || !songB) return <p>Loading...</p>;
   return (
     <div>
-      <TrackManager songs={songs} />
+      <button onClick={() => selectItem(songA, songB)}>Select {songA}</button>
+      <p>{songInfoA?.album.name}</p>
+      <h1>{songA}</h1>
+      <h1>{songB}</h1>
+      <p>{songInfoB?.album.name}</p>
+      <button onClick={() => selectItem(songB, songA)}>Select {songB}</button>
     </div>
   );
 }

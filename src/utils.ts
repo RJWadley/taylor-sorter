@@ -1,5 +1,8 @@
-import { DetailedTrack, srs } from "App";
+import { DetailedTrack } from "App";
 
+/**
+ * randomize the order of an array
+ */
 export const shuffle = <T>(array: T[]): T[] => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -8,24 +11,30 @@ export const shuffle = <T>(array: T[]): T[] => {
   return array;
 };
 
+/**
+ * given an array of tracks, return a new array with no duplicate tracks
+ * and no tracks with the same name
+ * and no voice memos
+ * @param array array of tracks
+ * @returns array of tracks with no duplicates
+ */
 export const dedupe = (array: DetailedTrack[]): DetailedTrack[] => {
-  //filter by track.info.id
-  return array.filter(
+  // filter out tracks with the exact same id
+  let uniqueSongs = array.filter(
     (track, index, self) =>
       index === self.findIndex((t) => t.info.id === track.info.id)
   );
-};
 
-export const getSRS = () => {
-  //get from local storage
-  const srs = localStorage.getItem("srs");
-  if (srs) {
-    return JSON.parse(srs) as srs;
-  } else {
-    return {};
-  }
-};
+  // filter out tracks with the same name
+  uniqueSongs = uniqueSongs.filter(
+    (track, index, self) =>
+      index === self.findIndex((t) => t.info.name === track.info.name)
+  );
 
-export const setSRS = (srs: srs) => {
-  localStorage.setItem("srs", JSON.stringify(srs));
+  // filter out voice memos
+  uniqueSongs = uniqueSongs.filter(
+    (track) => !track.info.name.toLowerCase().includes("voice memo")
+  );
+
+  return uniqueSongs;
 };
