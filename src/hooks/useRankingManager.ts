@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import EloRank from "elo-rank";
 import { shuffle } from "utils";
+import mergeSort from "utils/mergeSort";
 
 const elo = new EloRank();
 
@@ -12,6 +13,7 @@ type MatchUp = {
 
 /**
  * given a list of items, rank them using the elo algorithm
+ * and using a simple algorithm
  * store all the known match ups in local storage
  * @param items the list of every item
  * @returns
@@ -20,13 +22,33 @@ type MatchUp = {
  *
  * `selectItem` - call this function with the item that won the match up
  */
-export default function useRankingManager(items: string[]) {
+export default function useRankingManager(items: readonly string[]) {
+  /**
+   * scores using the ELO algorithm
+   */
   const [scores] = useState<Record<string, number>>({});
+  /**
+   * how many times each item has been matched up
+   */
   const [matchUpCounts] = useState<Record<string, number>>({});
+  /**
+   * simple ranking
+   */
+  const [simpleRanking, setSimpleRanking] = useState<string[]>([]);
+  /**
+   * the next two items to compare
+   */
   const [nextTwoItems, setNextTwoItems] = useState<[string, string]>();
+  /**
+   * every match up that has happened
+   */
   const [matchUps] = useState<MatchUp[]>(
     JSON.parse(localStorage.getItem("matchUps") ?? "[]")
   );
+  /**
+   * how done we are as a percentage
+   */
+  const [progress, setProgress] = useState(0);
 
   /**
    * get an initial set of two items to compare
@@ -40,7 +62,7 @@ export default function useRankingManager(items: string[]) {
   /**
    * update the ELO scores for a winner and loser
    */
-  const updateElo = useCallback(
+  const updateScores = useCallback(
     (winner: string, loser: string) => {
       // update the match up counts
       matchUpCounts[winner] ||= 0;
@@ -63,47 +85,161 @@ export default function useRankingManager(items: string[]) {
   );
 
   /**
-   * on the first render, get the match ups from local storage
+   * select the next two songs to compare
    */
-  useEffect(() => {
-    for (const matchUp of matchUps) {
-      const [playerA, playerB] = matchUp.players;
+  const selectNextSongs = () => {
+    let simpleInProgress = false;
+    let totalCount = 0;
+    const neededBattles: [string, string][] = [];
 
-      if (playerA === matchUp.winner) {
-        updateElo(playerA, playerB);
-      } else if (playerB === matchUp.winner) {
-        updateElo(playerB, playerA);
+    // first sort the items using a merge sort.
+    // track which comparisons we need to make to improve the sort
+    const comparison = (a: string, b: string) => {
+      totalCount += 1;
+      const battles = matchUps.filter(
+        (matchUp) => matchUp.players.includes(a) && matchUp.players.includes(b)
+      );
+
+      if (battles.length === 0) {
+        neededBattles.push([a, b]);
+        simpleInProgress = true;
+
+        // if they've never competed, guess the winner using the ELO scores
+        scores[a] ||= 1000;
+        scores[b] ||= 1000;
+        if (scores[a] === scores[b]) {
+          return 0;
+        }
+        // higher score comes first
+        return scores[a] > scores[b] ? -1 : 1;
+      }
+
+      const cumulativeScore = battles.reduce((acc, matchUp) => {
+        if (matchUp.winner === a) {
+          return acc - 1;
+        } else if (matchUp.winner === b) {
+          return acc + 1;
+        } else {
+          return acc;
+        }
+      }, 0);
+
+      return cumulativeScore;
+    };
+
+    const simpleRanking = mergeSort([...items], comparison);
+    setSimpleRanking(simpleRanking);
+    let [nextBattle] = neededBattles;
+    setNextTwoItems(nextBattle);
+
+    const progress = 1 - neededBattles.length / totalCount;
+    setProgress(progress);
+    if (simpleInProgress) return;
+    setProgress(1);
+
+    /**
+     * now, we select items using a few different strategies
+     */
+
+    // 80% of the time, return items with the most common score
+    if (Math.random() < 0.8) {
+      const modeScore = getMode(scores);
+      const itemsWithModeScore = Object.entries(scores)
+        .filter(([, score]) => score === modeScore)
+        .map(([item]) => item);
+
+      if (itemsWithModeScore.length >= 2) {
+        const [itemA, itemB] = shuffle(itemsWithModeScore);
+        setNextTwoItems([itemA, itemB]);
       }
     }
-  }, [matchUps, updateElo]);
 
-  const selectItem = (winner: string, loser: string) => {
-    updateElo(winner, loser);
-
-    // update the match ups
-    matchUps.push({ players: [winner, loser], winner });
-    localStorage.setItem("matchUps", JSON.stringify(matchUps));
-
-    if (Math.random() < 0.2) {
-      // return two random items (20% of the time)
+    // return two random items OR
+    // the least played item and it's closest competitor
+    if (Math.random() < 0.5) {
       const [itemA, itemB] = shuffle(items);
       setNextTwoItems([itemA, itemB]);
     } else {
-      // return the least played item and a random item (80% of the time)
-
       // sort the items by the number of match ups they've had
       // where the least played item is first
-      const sortedItems = items.sort(
+      const sortedItems = [...items].sort(
         (a, b) => (matchUpCounts[a] ?? 0) - (matchUpCounts[b] ?? 0)
       );
 
-      // then, get the least played item
-      const leastPlayedItem = sortedItems[0];
-      const randomItem = sortedItems[Math.floor(Math.random() * items.length)];
+      // then, get the least played item and the item with the closest score
+      const [leastPlayed] = sortedItems;
+      const closestScore = sortedItems
+        .slice(1)
+        .reduce((acc, item) =>
+          Math.abs(scores[item] - scores[leastPlayed]) <
+          Math.abs(scores[acc] - scores[leastPlayed])
+            ? item
+            : acc
+        );
 
-      setNextTwoItems([leastPlayedItem, randomItem]);
+      setNextTwoItems([leastPlayed, closestScore]);
     }
   };
 
-  return { nextTwoItems, selectItem, scores, matchUps };
+  /**
+   * on the first render, get the match ups from local storage
+   */
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (items.length && isFirstRender.current) {
+      for (const matchUp of matchUps) {
+        const [playerA, playerB] = matchUp.players;
+
+        if (playerA === matchUp.winner) {
+          updateScores(playerA, playerB);
+        } else if (playerB === matchUp.winner) {
+          updateScores(playerB, playerA);
+        }
+      }
+
+      selectNextSongs();
+      isFirstRender.current = false;
+    }
+  });
+
+  /**
+   * select a winner between two items
+   * @param winner the song that won
+   * @param loser the song that lost
+   */
+  const selectItem = (winner: string, loser: string) => {
+    updateScores(winner, loser);
+
+    matchUps.push({ players: [winner, loser], winner });
+    if (matchUps.length > 30_000) matchUps.shift();
+    localStorage.setItem("matchUps", JSON.stringify(matchUps));
+
+    // @ts-expect-error
+    window.matchUps = matchUps;
+
+    selectNextSongs();
+  };
+
+  return { nextTwoItems, selectItem, scores: scores, simpleRanking, progress };
+}
+
+/**
+ * calculate the most common number in a record of numbers
+ */
+function getMode(arr: Record<string, number>) {
+  const numbers = Object.values(arr);
+  let [mode] = numbers;
+  let maxCount = 0;
+  const counts: { [key: number]: number } = {};
+
+  for (let i = 0; i < numbers.length; i++) {
+    const val = numbers[i];
+    counts[val] = (counts[val] || 0) + 1;
+    if (counts[val] > maxCount) {
+      maxCount = counts[val];
+      mode = val;
+    }
+  }
+
+  return mode;
 }

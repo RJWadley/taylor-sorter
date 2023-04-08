@@ -3,7 +3,8 @@ import { DetailedTrack } from "App";
 /**
  * randomize the order of an array
  */
-export const shuffle = <T>(array: T[]): T[] => {
+export const shuffle = <T>(arrayIn: readonly T[]): T[] => {
+  const array = [...arrayIn];
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];

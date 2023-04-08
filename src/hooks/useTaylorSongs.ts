@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { DetailedTrack } from "App";
 import { SpotifyContext } from "components/SpotifyProvider";
 import { useContext } from "react";
 import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
-import { dedupe, shuffle } from "utils";
+import { dedupe } from "utils";
 
 const TAYLOR_ID = "06HL4z0CvFAxyc27GXpf02";
 
@@ -10,7 +11,7 @@ const TAYLORS_VERSIONS = ["fearless", "red"];
 const INCLUDE_LIVE = false;
 const INCLUDE_REMIXES = false;
 
-export default function useTaylorSongs() {
+export default function useTaylorSongs(): readonly DetailedTrack[] {
   const { initializeApi, isInitialized, spotify } = useContext(SpotifyContext);
 
   const { data: albums } = useQuery({
@@ -126,5 +127,5 @@ export default function useTaylorSongs() {
     },
   });
 
-  return shuffle(dedupe(songs ?? []));
+  return dedupe(songs ?? []);
 }
