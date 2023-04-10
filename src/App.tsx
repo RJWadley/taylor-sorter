@@ -1,7 +1,7 @@
 import Leaderboard from "components/Leaderboard";
+import Player from "components/Player";
 import useRankingManager from "hooks/useRankingManager";
 import useTaylorSongs from "hooks/useTaylorSongs";
-import { useEffect } from "react";
 import {
   SimplifiedAlbum,
   SimplifiedTrack,
@@ -22,23 +22,25 @@ function App() {
   const songInfoA = songs.find((song) => song.info.name === songA);
   const songInfoB = songs.find((song) => song.info.name === songB);
 
-  useEffect(() => {
-    if (Math.random() < 0.999 && nextTwoItems) {
-      nextTwoItems.sort();
-      setTimeout(() => {
-        selectItem(nextTwoItems[0], nextTwoItems[1]);
-      }, 0);
-    }
-  }, [nextTwoItems, selectItem]);
+  // useEffect(() => {
+  //   if (Math.random() < 0.999 && nextTwoItems) {
+  //     nextTwoItems.sort();
+  //     setTimeout(() => {
+  //       selectItem(nextTwoItems[0], nextTwoItems[1]);
+  //     }, 0);
+  //   }
+  // }, [nextTwoItems, selectItem]);
 
   if (!songA || !songB) return <p>Loading...</p>;
   return (
     <div>
+      <Player song={songInfoA}></Player>
       <button onClick={() => selectItem(songA, songB)}>Select {songA}</button>
       <p>{songInfoA?.album.name}</p>
       <h1>{songA}</h1>
       <h1>{songB}</h1>
       <p>{songInfoB?.album.name}</p>
+      <Player song={songInfoB}></Player>
       <button onClick={() => selectItem(songB, songA)}>Select {songB}</button>
 
       <p>Progress: {Math.round(progress * 100)}%</p>
