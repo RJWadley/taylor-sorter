@@ -2,15 +2,6 @@ import Leaderboard from "components/Leaderboard";
 import Player from "components/Player";
 import useRankingManager from "hooks/useRankingManager";
 import useTaylorSongs from "hooks/useTaylorSongs";
-import {
-  SimplifiedAlbum,
-  SimplifiedTrack,
-} from "spotify-web-api-ts/types/types/SpotifyObjects";
-
-export type DetailedTrack = {
-  info: SimplifiedTrack;
-  album: SimplifiedAlbum;
-};
 
 function App() {
   const songs = useTaylorSongs();

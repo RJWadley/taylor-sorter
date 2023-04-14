@@ -1,4 +1,4 @@
-import { DetailedTrack } from "App";
+import { DetailedTrack } from "utils/music/types";
 import React from "react";
 type props = {
   track: DetailedTrack;

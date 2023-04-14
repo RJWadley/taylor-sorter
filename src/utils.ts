@@ -1,4 +1,4 @@
-import { DetailedTrack } from "App";
+import { DetailedTrack } from "utils/music/types";
 
 /**
  * randomize the order of an array

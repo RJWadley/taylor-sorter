@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { DetailedTrack } from "App";
+import { DetailedTrack } from "utils/music/types";
 import { SpotifyContext } from "components/SpotifyProvider";
 import { useContext } from "react";
 import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
@@ -12,17 +12,13 @@ const INCLUDE_LIVE = false;
 const INCLUDE_REMIXES = false;
 
 export default function useTaylorSongs(): readonly DetailedTrack[] {
-  const { initializeApi, isInitialized, spotify } = useContext(SpotifyContext);
+  const music = useContext(SpotifyContext);
+
+  const spotify = music?.spotify;
 
   const { data: albums } = useQuery({
-    queryKey: ["taylorAlbums", isInitialized],
+    queryKey: ["taylorAlbums", spotify?.getAccessToken()],
     queryFn: async () => {
-      // init the spotify api
-      if (!isInitialized) {
-        initializeApi();
-        return [];
-      }
-
       const combinedAlbums: SimplifiedAlbum[] = [];
       let next = true;
       let page = 0;

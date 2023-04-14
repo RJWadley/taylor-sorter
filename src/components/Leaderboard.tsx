@@ -1,5 +1,5 @@
-import { DetailedTrack } from "App";
 import { useState } from "react";
+import { DetailedTrack } from "utils/music/types";
 
 export default function Leaderboard({
   scores,
