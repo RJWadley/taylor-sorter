@@ -1,4 +1,4 @@
-import { DetailedTrack } from "utils/music/types";
+import { GenericTrack } from "utils/music/types";
 
 /**
  * randomize the order of an array
@@ -19,22 +19,21 @@ export const shuffle = <T>(arrayIn: readonly T[]): T[] => {
  * @param array array of tracks
  * @returns array of tracks with no duplicates
  */
-export const dedupe = (array: DetailedTrack[]): DetailedTrack[] => {
+export const dedupe = (array: GenericTrack[]): GenericTrack[] => {
   // filter out tracks with the exact same id
   let uniqueSongs = array.filter(
-    (track, index, self) =>
-      index === self.findIndex((t) => t.info.id === track.info.id)
+    (track, index, self) => index === self.findIndex((t) => t.id === track.id)
   );
 
   // filter out tracks with the same name
   uniqueSongs = uniqueSongs.filter(
     (track, index, self) =>
-      index === self.findIndex((t) => t.info.name === track.info.name)
+      index === self.findIndex((t) => t.name === track.name)
   );
 
   // filter out voice memos
   uniqueSongs = uniqueSongs.filter(
-    (track) => !track.info.name.toLowerCase().includes("voice memo")
+    (track) => !track.name.toLowerCase().includes("voice memo")
   );
 
   return uniqueSongs;

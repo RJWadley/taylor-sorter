@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { DetailedTrack } from "utils/music/types";
 import { SpotifyContext } from "components/SpotifyProvider";
 import { useContext } from "react";
-import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
 import { dedupe } from "utils";
+import { GenericTrack } from "utils/music/types";
 
 const TAYLOR_ID = "06HL4z0CvFAxyc27GXpf02";
 
@@ -11,27 +10,17 @@ const TAYLORS_VERSIONS = ["fearless", "red"];
 const INCLUDE_LIVE = false;
 const INCLUDE_REMIXES = false;
 
-export default function useTaylorSongs(): readonly DetailedTrack[] {
+export default function useTaylorSongs(): readonly GenericTrack[] {
   const music = useContext(SpotifyContext);
 
   const spotify = music?.spotify;
 
   const { data: albums } = useQuery({
-    queryKey: ["taylorAlbums", spotify?.getAccessToken()],
+    queryKey: ["taylorAlbums", !!music, !!spotify?.getAccessToken()],
     queryFn: async () => {
-      const combinedAlbums: SimplifiedAlbum[] = [];
-      let next = true;
-      let page = 0;
-      while (next) {
-        const albums = await spotify?.artists.getArtistAlbums(TAYLOR_ID, {
-          limit: 50,
-          offset: page * 50,
-          include_groups: ["album", "single"],
-        });
-        combinedAlbums.push(...(albums?.items ?? []));
-        next = !!albums?.next;
-        page++;
-      }
+      if (!music) return [];
+      const combinedAlbums = await music?.getAlbums(TAYLOR_ID);
+      if (!combinedAlbums) return [];
 
       // filter out albums that aren't taylors version if a taylors version exists
       const taylorsVersionAlbums = combinedAlbums.filter((album) => {
@@ -96,30 +85,8 @@ export default function useTaylorSongs(): readonly DetailedTrack[] {
     enabled: !!albums?.length,
     queryFn: async () => {
       if (!albums) return [];
-      const currentRegion = navigator.language.split("-")[1];
-
-      const songs = await Promise.all(
-        albums.map(async (album) => {
-          //ensure album is available in current region
-          if (
-            album.available_markets === undefined ||
-            album.available_markets.includes(currentRegion)
-          ) {
-            //get album tracks
-            const tracks = await spotify?.albums.getAlbumTracks(album.id);
-
-            if (!tracks) return [];
-            return tracks.items.map((info) => ({
-              info,
-              album,
-            }));
-          } else {
-            return [];
-          }
-        }) ?? []
-      );
-
-      return songs.flat();
+      const songs = await music?.getSongs(albums);
+      return songs ?? [];
     },
   });
 

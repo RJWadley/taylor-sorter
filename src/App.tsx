@@ -7,11 +7,11 @@ function App() {
   const songs = useTaylorSongs();
 
   const { nextTwoItems, selectItem, scores, simpleRanking, progress } =
-    useRankingManager(songs.map((song) => song.info.name));
+    useRankingManager(songs.map((song) => song.name));
 
   const [songA, songB] = nextTwoItems ?? [];
-  const songInfoA = songs.find((song) => song.info.name === songA);
-  const songInfoB = songs.find((song) => song.info.name === songB);
+  const songInfoA = songs.find((song) => song.name === songA);
+  const songInfoB = songs.find((song) => song.name === songB);
 
   // useEffect(() => {
   //   if (Math.random() < 0.999 && nextTwoItems) {

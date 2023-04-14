@@ -1,9 +1,9 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { SpotifyContext } from "./SpotifyProvider";
-import { DetailedTrack } from "utils/music/types";
 import { MusicState } from "utils/music/music";
+import { GenericTrack } from "utils/music/types";
 
-export default function Player({ song }: { song?: DetailedTrack }) {
+export default function Player({ song }: { song?: GenericTrack }) {
   const music = useContext(SpotifyContext);
   const [playing, setPlaying] = useState(false);
   const isCooldown = useRef(false);
@@ -21,15 +21,15 @@ export default function Player({ song }: { song?: DetailedTrack }) {
   };
 
   useEffect(() => {
+    music?.pause();
+    setPlaying(false);
     const changeState = (state: MusicState) => {
-      setPlaying(
-        !state.paused && state.currentSong?.info.uri === song?.info.uri
-      );
+      setPlaying(!state.paused && state.currentSong?.uri === song?.uri);
     };
 
     music?.onStateChange(changeState);
     return () => music?.offStateChange(changeState);
-  });
+  }, [music, song?.uri]);
 
   return <button onClick={togglePlayback}>{playing ? "Pause" : "Play"}</button>;
 }
