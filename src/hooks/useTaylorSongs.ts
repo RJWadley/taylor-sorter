@@ -58,6 +58,7 @@ export default function useTaylorSongs(): readonly GenericTrack[] {
             album.name.toLowerCase().includes("version") &&
             // don't filter out tv
             !album.name.match(/Taylor(’|')s Version/) &&
+            !album.name.toLowerCase().includes("deluxe version") &&
             // don't filter out acoustic
             !album.name.toLowerCase().includes("acoustic")
           )
