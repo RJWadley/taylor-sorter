@@ -1,3 +1,4 @@
+import "the-new-css-reset/css/reset.css";
 import "./index.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

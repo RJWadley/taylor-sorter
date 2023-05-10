@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { SpotifyWebApi } from "spotify-web-api-ts";
 import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
 import SpotifyPlayer from "spotify-web-playback";
@@ -143,6 +144,16 @@ export default class Music {
     this.dispatchStateChange({ paused: true });
   }
 
+  public async seek(seconds: number) {
+    if (!this.spotifyToken) await this.authenticate();
+    if (!this.spotifyToken) return;
+    if (this.isPremium) {
+      await player.seek(seconds * 1000);
+    } else {
+      fallbackAudio.currentTime = seconds;
+    }
+  }
+
   public onStateChange(callback: (state: MusicState) => void) {
     this.stateCallbacks.push(callback);
   }
@@ -165,3 +176,30 @@ export interface MusicState {
   paused: boolean;
   currentSong?: GenericTrack;
 }
+
+export const useMusicProgress = () => {
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    player.addListener("state", (state) => {
+      if (!state) return;
+      setProgress(Math.round(state.position / 1000));
+      setDuration(Math.round(state.duration / 1000));
+      setIsPlaying(!state.paused);
+    });
+  }, []);
+
+  useEffect(() => {
+    // if the music is playing, update the progress every second
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setProgress((p) => p + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying]);
+
+  return { progress, duration };
+};

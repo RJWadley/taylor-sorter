@@ -19,6 +19,7 @@
     "spotify-web-playback": "^1.4.0",
     "styled-components": "^5.3.10",
     "stylelint-config-reform-collective": "^1.0.0",
+    "the-new-css-reset": "^1.8.4",
     "typescript": "^5.0.4"
   },
   "overrides": {
