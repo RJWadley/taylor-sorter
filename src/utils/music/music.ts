@@ -33,6 +33,7 @@ export default class Music {
       if (newToken) {
         this.spotifyToken = newToken;
         spotify.setAccessToken(newToken);
+        player.setToken(newToken);
 
         // clear out the code verifier
         localStorage.removeItem("codeVerifier");

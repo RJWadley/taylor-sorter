@@ -87,8 +87,12 @@ export const grantSpotifyPermissions = async () => {
  * @param refreshToken the refresh token
  * @returns the new access token
  */
-export const authSpotifyWithRefreshToken = async (refreshToken: string | null) => {
+export const authSpotifyWithRefreshToken = async (
+  refreshToken: string | null
+) => {
   if (!refreshToken) return;
+  console.log("refreshing token");
+
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
@@ -128,6 +132,8 @@ export const authSpotifyWithRefreshToken = async (refreshToken: string | null) =
  * @returns the new access token
  */
 export const authWithCode = async (code: string, codeVerifier: string) => {
+  console.log("authorizing with code");
+
   let body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
