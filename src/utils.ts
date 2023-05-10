@@ -4,12 +4,12 @@ import { GenericTrack } from "utils/music/types";
  * randomize the order of an array
  */
 export const shuffle = <T>(arrayIn: readonly T[]): T[] => {
-  const array = [...arrayIn];
+  const array: (T | undefined)[] = [...arrayIn];
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
-  return array;
+  return array.flatMap((item) => (item ? [item] : []));
 };
 
 /**

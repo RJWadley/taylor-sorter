@@ -20,13 +20,17 @@ function merge<T>(left: T[], right: T[], compare: (a: T, b: T) => number): T[] {
   let rightIndex = 0;
 
   while (leftIndex < left.length && rightIndex < right.length) {
-    const comparison = compare(left[leftIndex], right[rightIndex]);
-    if (comparison <= 0) {
-      array.push(left[leftIndex]);
-      leftIndex++;
-    } else {
-      array.push(right[rightIndex]);
-      rightIndex++;
+    const leftItem = left[leftIndex];
+    const rightItem = right[rightIndex];
+    if (leftItem && rightItem) {
+      const comparison = compare(leftItem, rightItem);
+      if (comparison <= 0) {
+        array.push(leftItem);
+        leftIndex++;
+      } else {
+        array.push(rightItem);
+        rightIndex++;
+      }
     }
   }
 

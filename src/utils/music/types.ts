@@ -2,7 +2,7 @@ export type GenericAlbum = {
   id: string;
   name: string;
   uri: string;
-  image: string;
+  image: string|undefined;
   available_markets: string[] | undefined;
 };
 

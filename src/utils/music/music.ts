@@ -86,7 +86,7 @@ export default class Music {
     if (!this.spotifyToken) this.authenticate();
     if (!this.spotifyToken) return;
     const allSongs = albums.flatMap((album) => {
-      const currentMarket = window.navigator.language.split("-")[1];
+      const currentMarket = window.navigator.language.split("-")[1] ?? "US";
       const validMarket = album.available_markets?.includes(currentMarket);
       if (validMarket)
         return spotify?.albums

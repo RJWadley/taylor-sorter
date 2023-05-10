@@ -54,8 +54,9 @@ export default function useRankingManager(items: readonly string[]) {
    * get an initial set of two items to compare
    */
   useEffect(() => {
-    if (!nextTwoItems && items.length) {
-      setNextTwoItems([items[0], items[1]]);
+    const [first, second] = items;
+    if (!nextTwoItems && first && second) {
+      setNextTwoItems([first, second]);
     }
   }, [items, nextTwoItems]);
 
@@ -74,12 +75,26 @@ export default function useRankingManager(items: readonly string[]) {
       scores[loser] ||= 1000;
 
       // get the expected scores
-      var expectedScoreWinner = elo.getExpected(scores[winner], scores[loser]);
-      var expectedScoreLoser = elo.getExpected(scores[loser], scores[winner]);
+      var expectedScoreWinner = elo.getExpected(
+        scores[winner] ?? 1000,
+        scores[loser] ?? 1000
+      );
+      var expectedScoreLoser = elo.getExpected(
+        scores[loser] ?? 1000,
+        scores[winner] ?? 1000
+      );
 
       // update the ELO scores
-      scores[winner] = elo.updateRating(expectedScoreWinner, 1, scores[winner]);
-      scores[loser] = elo.updateRating(expectedScoreLoser, 0, scores[loser]);
+      scores[winner] = elo.updateRating(
+        expectedScoreWinner,
+        1,
+        scores[winner] ?? 1000
+      );
+      scores[loser] = elo.updateRating(
+        expectedScoreLoser,
+        0,
+        scores[loser] ?? 1000
+      );
     },
     [matchUpCounts, scores]
   );
@@ -110,8 +125,9 @@ export default function useRankingManager(items: readonly string[]) {
         if (scores[a] === scores[b]) {
           return 0;
         }
+
         // higher score comes first
-        return scores[a] > scores[b] ? -1 : 1;
+        return (scores[a] ?? 1000) > (scores[b] ?? 1000) ? -1 : 1;
       }
 
       const cumulativeScore = battles.reduce((acc, matchUp) => {
@@ -150,7 +166,7 @@ export default function useRankingManager(items: readonly string[]) {
 
       if (itemsWithModeScore.length >= 2) {
         const [itemA, itemB] = shuffle(itemsWithModeScore);
-        setNextTwoItems([itemA, itemB]);
+        if (itemA && itemB) setNextTwoItems([itemA, itemB]);
       }
     }
 
@@ -158,7 +174,7 @@ export default function useRankingManager(items: readonly string[]) {
     // the least played item and it's closest competitor
     if (Math.random() < 0.5) {
       const [itemA, itemB] = shuffle(items);
-      setNextTwoItems([itemA, itemB]);
+      if (itemA && itemB) setNextTwoItems([itemA, itemB]);
     } else {
       // sort the items by the number of match ups they've had
       // where the least played item is first
@@ -168,16 +184,24 @@ export default function useRankingManager(items: readonly string[]) {
 
       // then, get the least played item and the item with the closest score
       const [leastPlayed] = sortedItems;
-      const closestScore = sortedItems
-        .slice(1)
-        .reduce((acc, item) =>
-          Math.abs(scores[item] - scores[leastPlayed]) <
-          Math.abs(scores[acc] - scores[leastPlayed])
-            ? item
-            : acc
-        );
+      let closestScore = sortedItems[1];
+      for (const item of sortedItems.slice(2)) {
+        const leastPlayedScore = leastPlayed && scores[leastPlayed];
+        const itemScore = scores[item];
+        const closestScoreScore = closestScore && scores[closestScore];
+        if (
+          leastPlayedScore &&
+          itemScore &&
+          closestScoreScore &&
+          Math.abs(itemScore - leastPlayedScore) <
+            Math.abs(closestScoreScore - leastPlayedScore)
+        ) {
+          closestScore = item;
+        }
+      }
 
-      setNextTwoItems([leastPlayed, closestScore]);
+      if (leastPlayed && closestScore)
+        setNextTwoItems([leastPlayed, closestScore]);
     }
   };
 
@@ -234,10 +258,13 @@ function getMode(arr: Record<string, number>) {
 
   for (let i = 0; i < numbers.length; i++) {
     const val = numbers[i];
-    counts[val] = (counts[val] || 0) + 1;
-    if (counts[val] > maxCount) {
-      maxCount = counts[val];
-      mode = val;
+    if (val) {
+      const thisVal = (counts[val] ?? 0) + 1;
+      counts[val] = thisVal;
+      if (thisVal > maxCount) {
+        maxCount = thisVal;
+        mode = val;
+      }
     }
   }
 
