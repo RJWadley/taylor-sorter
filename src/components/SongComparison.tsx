@@ -19,11 +19,11 @@ export default function SongComparison() {
   const songInfoB = songs.find((song) => song.name === songB);
 
   useEffect(() => {
-    if (!nextTwoItems) return;
-    nextTwoItems.sort();
-    setTimeout(() => {
-      selectItem(nextTwoItems[0], nextTwoItems[1]);
-    }, 0);
+    // if (!nextTwoItems) return;
+    // nextTwoItems.sort();
+    // setTimeout(() => {
+    //   selectItem(nextTwoItems[0], nextTwoItems[1]);
+    // }, 0);
   }, [nextTwoItems, selectItem]);
 
   if (!songInfoA || !songInfoB || !songA || !songB) return <p>Loading...</p>;
