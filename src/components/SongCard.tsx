@@ -12,8 +12,7 @@ export default function SongCard({
 }) {
   const [hue, saturation] = useImageHSL(track.album.image);
 
-  if (hue === undefined) return <>No hue found</>;
-  if (saturation === undefined) return <>No saturation found</>;
+  if (hue === undefined || saturation === undefined) return null;
   return (
     <Wrapper
       lightAccent={`hsl(${hue}, ${saturation}%, 85%)`}

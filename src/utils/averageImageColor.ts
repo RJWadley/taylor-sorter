@@ -5,9 +5,13 @@ import { useEffect, useState } from "react";
 
 import { rgbToHsl } from "./colorUtils";
 
+const hslCache: Record<string, [number, number, number]> = {};
+
 const averageImageHSL = (
   imageURL: string
 ): Promise<[number, number, number]> => {
+  const cached = hslCache[imageURL];
+  if (cached) return Promise.resolve(cached);
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "Anonymous";
@@ -31,11 +35,12 @@ const averageImageHSL = (
         b += data[i + 2] ?? 0;
       }
       const avg = [r / data.length, g / data.length, b / data.length];
-      const hue = rgbToHsl(avg[0] ?? 0, avg[1] ?? 0, avg[2] ?? 0);
+      const values = rgbToHsl(avg[0] ?? 0, avg[1] ?? 0, avg[2] ?? 0);
 
       img.removeEventListener("load", onLoad);
       img.removeEventListener("error", reject);
-      return resolve(hue);
+      hslCache[imageURL] = values;
+      return resolve(values);
     };
 
     const onError = () => {

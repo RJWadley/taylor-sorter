@@ -103,21 +103,25 @@ export default function useRankingManager(items: readonly string[]) {
    * select the next two songs to compare
    */
   const selectNextSongs = () => {
-    let simpleInProgress = false;
-    let totalCount = 0;
+    /**
+     * how many comparisons we knew in a row before we had to guess
+     */
+    let knownAnswerStreak: number | undefined;
+    let totalComparisons = 0;
     const neededBattles: [string, string][] = [];
 
     // first sort the items using a merge sort.
     // track which comparisons we need to make to improve the sort
     const comparison = (a: string, b: string) => {
-      totalCount += 1;
+      totalComparisons++;
+
       const battles = matchUps.filter(
         (matchUp) => matchUp.players.includes(a) && matchUp.players.includes(b)
       );
 
       if (battles.length === 0) {
         neededBattles.push([a, b]);
-        simpleInProgress = true;
+        knownAnswerStreak ||= totalComparisons;
 
         // if they've never competed, guess the winner using the ELO scores
         scores[a] ||= 1000;
@@ -146,10 +150,10 @@ export default function useRankingManager(items: readonly string[]) {
     const [nextBattle] = neededBattles;
     setNextTwoItems(nextBattle);
 
-    setProgress(1 - neededBattles.length / totalCount);
+    setProgress((knownAnswerStreak ?? totalComparisons) / totalComparisons);
     // typescript is wrong here...
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (simpleInProgress) return;
+    if (knownAnswerStreak !== undefined) return;
     setProgress(1);
 
     /**

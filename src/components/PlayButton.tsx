@@ -18,11 +18,7 @@ export default function PlayButton({ track }: { track: GenericTrack }) {
       isCooldown.current = false;
     }, 1000);
 
-    if (playing) {
-      await music?.pause();
-    } else if (track) {
-      await music?.playSong(track);
-    }
+    await (playing ? music?.pause() : music?.playSong(track));
   };
 
   useEffect(() => {
@@ -38,8 +34,7 @@ export default function PlayButton({ track }: { track: GenericTrack }) {
 
   const [hue, saturation] = useImageHSL(track.album.image);
 
-  if (!hue) return <>No hue found</>;
-  if (!saturation) return <>No saturation found</>;
+  if (hue === undefined || saturation === undefined) return null;
   return (
     <Wrapper
       onClick={() => {
@@ -76,7 +71,7 @@ const Icon = styled.div`
 `;
 
 const SongName = styled.div`
-  max-width: 250px;
+  max-width: 350px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

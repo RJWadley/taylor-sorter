@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { SpotifyWebApi } from "spotify-web-api-ts";
-import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
 import SpotifyPlayer from "spotify-web-playback";
 
 import {
@@ -8,7 +7,7 @@ import {
   authWithCode,
   grantSpotifyPermissions,
 } from "./spotifyAuth";
-import { GenericAlbum, GenericTrack } from "./types";
+import { GenericTrack } from "./types";
 
 const spotify = new SpotifyWebApi();
 const player = new SpotifyPlayer("Song Sorter");
@@ -59,52 +58,45 @@ export default class Music {
     await grantSpotifyPermissions();
   }
 
-  public async getAlbums(
-    artistId: string
-  ): Promise<GenericAlbum[] | undefined> {
-    if (!this.spotifyToken) await this.authenticate();
-    if (!this.spotifyToken) return;
-    const combinedAlbums: SimplifiedAlbum[] = [];
-    let next = true;
-    let page = 0;
-    while (next) {
-      const albums = await spotify.artists.getArtistAlbums(artistId, {
-        limit: 50,
-        offset: page * 50,
-        include_groups: ["album", "single"],
-      });
-      combinedAlbums.push(...albums.items);
-      next = !!albums.next;
-      page++;
-    }
-
-    return combinedAlbums.map((album) => ({
-      ...album,
-      image: album.images[0]?.url,
-      available_markets: album.available_markets,
-    }));
-  }
-
-  public async getSongs(
-    albums: GenericAlbum[]
+  public async getSongsFromPlaylist(
+    playlistId: string
   ): Promise<GenericTrack[] | undefined> {
     if (!this.spotifyToken) await this.authenticate();
     if (!this.spotifyToken) return;
-    const songPromises = albums.flatMap((album) => {
-      const currentMarket = window.navigator.language.split("-")[1] ?? "US";
-      const validMarket = album.available_markets?.includes(currentMarket);
-      return validMarket
-        ? spotify.albums.getAlbumTracks(album.id).then((tracks) =>
-            tracks.items.map((track) => ({
-              ...track,
-              album,
-            }))
-          )
-        : undefined;
-    });
+    const combinedSongs: GenericTrack[] = [];
+    let next = true;
+    let page = 0;
+    while (next) {
+      const songs = await spotify.playlists.getPlaylistItems(playlistId, {
+        offset: page * 50,
+      });
+      combinedSongs.push(
+        ...songs.items.flatMap((item) => {
+          const { track } = item;
+          if (track.type !== "track") return [];
+          const { album } = track;
 
-    const allSongs = await Promise.all(songPromises);
-    return allSongs.flatMap((x) => x ?? []);
+          const currentMarket = window.navigator.language.split("-")[1] ?? "US";
+          const validMarket = album.available_markets?.includes(currentMarket);
+          if (!validMarket) return [];
+
+          return [
+            {
+              ...track,
+              album: {
+                ...album,
+                image: album.images[0]?.url,
+                available_markets: album.available_markets,
+              },
+            },
+          ];
+        })
+      );
+      next = !!songs.next;
+      page++;
+    }
+
+    return combinedSongs;
   }
 
   public async playSong(song: GenericTrack) {
@@ -116,7 +108,7 @@ export default class Music {
       if (!player.ready) await player.connect(this.spotifyToken);
       await player.play(song.uri);
     } else {
-      fallbackAudio.src = song.preview_url || "";
+      fallbackAudio.src = song.preview_url ?? "";
       fallbackAudio.volume = 0;
       await fallbackAudio.play();
       await sleep(100);

@@ -11,5 +11,5 @@ export interface GenericTrack {
   name: string;
   uri: string;
   album: GenericAlbum;
-  preview_url: string;
+  preview_url: string | null;
 }

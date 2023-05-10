@@ -62,6 +62,12 @@ export default function Player() {
     }
   }, [progress]);
 
+  // when the uri changes, reset everything
+  useEffect(() => {
+    setInternalProgress(0);
+    waitingForUpdate.current = false;
+  }, [song?.uri]);
+
   const onSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.round(Number(e.target.value));
     setInternalProgress(value);
@@ -90,7 +96,7 @@ export default function Player() {
           key={song?.uri}
           type="range"
           min={0}
-          max={100}
+          max={duration || 100}
           value={internalProgress}
           onChange={onSliderChange}
         />
@@ -111,8 +117,7 @@ const Wrapper = styled.div`
   background: #f6f6f6;
   display: grid;
   grid-template-columns: 50px auto 1fr 50px;
-  width: min(calc(100vw - 200px), 900px);
-  margin: 0 auto;
+  width: 100%;
   padding: 5px;
   border-radius: 20px;
   gap: 10px;
@@ -127,7 +132,7 @@ const Image = styled.img`
 `;
 
 const SongInfo = styled.div`
-  width: 150px;
+  max-width: 350px;
 `;
 
 const SongName = styled.div`
@@ -147,6 +152,9 @@ const Progress = styled.div`
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 10px;
+  width: 100%;
+  max-width: 800px;
+  place-self: center;
 `;
 
 const TimeStamp = styled.div``;
