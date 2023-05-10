@@ -34,5 +34,5 @@ function merge<T>(left: T[], right: T[], compare: (a: T, b: T) => number): T[] {
     }
   }
 
-  return array.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
+  return [...array, ...left.slice(leftIndex), ...right.slice(rightIndex)];
 }

@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-
+/* eslint-disable sonarjs/cognitive-complexity */
 import EloRank from "elo-rank";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { shuffle } from "utils";
 import mergeSort from "utils/mergeSort";
 
 const elo = new EloRank();
 
-type MatchUp = {
+interface MatchUp {
   players: [string, string];
   winner: string;
-};
+}
 
 /**
  * given a list of items, rank them using the elo algorithm
@@ -43,7 +43,7 @@ export default function useRankingManager(items: readonly string[]) {
    * every match up that has happened
    */
   const [matchUps] = useState<MatchUp[]>(
-    JSON.parse(localStorage.getItem("matchUps") ?? "[]")
+    JSON.parse(localStorage.getItem("matchUps") ?? "[]") as MatchUp[]
   );
   /**
    * how done we are as a percentage
@@ -75,11 +75,11 @@ export default function useRankingManager(items: readonly string[]) {
       scores[loser] ||= 1000;
 
       // get the expected scores
-      var expectedScoreWinner = elo.getExpected(
+      const expectedScoreWinner = elo.getExpected(
         scores[winner] ?? 1000,
         scores[loser] ?? 1000
       );
-      var expectedScoreLoser = elo.getExpected(
+      const expectedScoreLoser = elo.getExpected(
         scores[loser] ?? 1000,
         scores[winner] ?? 1000
       );
@@ -130,26 +130,25 @@ export default function useRankingManager(items: readonly string[]) {
         return (scores[a] ?? 1000) > (scores[b] ?? 1000) ? -1 : 1;
       }
 
-      const cumulativeScore = battles.reduce((acc, matchUp) => {
+      // rewrite the above without reduce
+      let score = 0;
+      for (const matchUp of battles) {
         if (matchUp.winner === a) {
-          return acc - 1;
+          score -= 1;
         } else if (matchUp.winner === b) {
-          return acc + 1;
-        } else {
-          return acc;
+          score += 1;
         }
-      }, 0);
-
-      return cumulativeScore;
+      }
+      return score;
     };
 
-    const simpleRanking = mergeSort([...items], comparison);
-    setSimpleRanking(simpleRanking);
-    let [nextBattle] = neededBattles;
+    setSimpleRanking(mergeSort([...items], comparison));
+    const [nextBattle] = neededBattles;
     setNextTwoItems(nextBattle);
 
-    const progress = 1 - neededBattles.length / totalCount;
-    setProgress(progress);
+    setProgress(1 - neededBattles.length / totalCount);
+    // typescript is wrong here...
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (simpleInProgress) return;
     setProgress(1);
 
@@ -210,7 +209,7 @@ export default function useRankingManager(items: readonly string[]) {
    */
   const isFirstRender = useRef(true);
   useEffect(() => {
-    if (items.length && isFirstRender.current) {
+    if (items.length > 0 && isFirstRender.current) {
       for (const matchUp of matchUps) {
         const [playerA, playerB] = matchUp.players;
 
@@ -238,13 +237,13 @@ export default function useRankingManager(items: readonly string[]) {
     if (matchUps.length > 30_000) matchUps.shift();
     localStorage.setItem("matchUps", JSON.stringify(matchUps));
 
-    // @ts-expect-error
+    // @ts-expect-error this is for debugging only
     window.matchUps = matchUps;
 
     selectNextSongs();
   };
 
-  return { nextTwoItems, selectItem, scores: scores, simpleRanking, progress };
+  return { nextTwoItems, selectItem, scores, simpleRanking, progress };
 }
 
 /**
@@ -254,10 +253,9 @@ function getMode(arr: Record<string, number>) {
   const numbers = Object.values(arr);
   let [mode] = numbers;
   let maxCount = 0;
-  const counts: { [key: number]: number } = {};
+  const counts: Record<number, number> = {};
 
-  for (let i = 0; i < numbers.length; i++) {
-    const val = numbers[i];
+  for (const val of numbers) {
     if (val) {
       const thisVal = (counts[val] ?? 0) + 1;
       counts[val] = thisVal;

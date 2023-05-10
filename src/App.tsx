@@ -3,7 +3,7 @@ import Player from "components/Player";
 import useRankingManager from "hooks/useRankingManager";
 import useTaylorSongs from "hooks/useTaylorSongs";
 
-function App() {
+export default function App() {
   const songs = useTaylorSongs();
 
   const { nextTwoItems, selectItem, scores, simpleRanking, progress } =
@@ -25,13 +25,13 @@ function App() {
   if (!songA || !songB) return <p>Loading...</p>;
   return (
     <div>
-      <Player song={songInfoA}></Player>
+      <Player song={songInfoA} />
       <button onClick={() => selectItem(songA, songB)}>Select {songA}</button>
       <p>{songInfoA?.album.name}</p>
       <h1>{songA}</h1>
       <h1>{songB}</h1>
       <p>{songInfoB?.album.name}</p>
-      <Player song={songInfoB}></Player>
+      <Player song={songInfoB} />
       <button onClick={() => selectItem(songB, songA)}>Select {songB}</button>
 
       <p>Progress: {Math.round(progress * 100)}%</p>
@@ -40,9 +40,7 @@ function App() {
         songs={songs}
         scores={scores}
         simpleRanking={simpleRanking}
-      ></Leaderboard>
+      />
     </div>
   );
 }
-
-export default App;

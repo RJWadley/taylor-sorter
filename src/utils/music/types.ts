@@ -1,12 +1,12 @@
-export type GenericAlbum = {
+export interface GenericAlbum {
   id: string;
   name: string;
   uri: string;
-  image: string|undefined;
+  image: string | undefined;
   available_markets: string[] | undefined;
-};
+}
 
-export type GenericTrack = {
+export interface GenericTrack {
   id: string;
   name: string;
   uri: string;

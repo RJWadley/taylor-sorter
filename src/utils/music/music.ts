@@ -1,23 +1,25 @@
 import { SpotifyWebApi } from "spotify-web-api-ts";
+import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
+import SpotifyPlayer from "spotify-web-playback";
+
 import {
-  authWithCode,
   authSpotifyWithRefreshToken,
+  authWithCode,
   grantSpotifyPermissions,
 } from "./spotifyAuth";
-import SpotifyPlayer from "spotify-web-playback";
 import { GenericAlbum, GenericTrack } from "./types";
-import { SimplifiedAlbum } from "spotify-web-api-ts/types/types/SpotifyObjects";
 
 const spotify = new SpotifyWebApi();
 const player = new SpotifyPlayer("Song Sorter");
 const fallbackAudio = new Audio();
 
 export default class Music {
+  public spotify = spotify;
   private spotifyToken?: string;
-  private isPremium: boolean = false;
-  spotify = spotify;
+  private isPremium = false;
+  private stateCallbacks: ((state: MusicState) => void)[] = [];
 
-  async authenticate() {
+  public async authenticate() {
     const codeVerifier = localStorage.getItem("codeVerifier");
     const refreshToken = localStorage.getItem("refresh_id");
     const code = new URLSearchParams(window.location.search).get("code");
@@ -39,39 +41,39 @@ export default class Music {
         localStorage.removeItem("codeVerifier");
 
         setTimeout(() => {
-          this.authenticate();
+          this.authenticate().catch(console.error);
         }, 3500 * 1000);
 
         // detect if the user is premium
-        await spotify.users
-          .getMe()
-          .then((user) => {
-            if (user.product === "premium") this.isPremium = true;
-          })
-          .catch(() => {});
+        await spotify.users.getMe().then((user) => {
+          if (user.product === "premium") this.isPremium = true;
+          return null;
+        });
 
         return;
       }
     }
 
     // otherwise, we need to get permissions from the user
-    grantSpotifyPermissions();
+    await grantSpotifyPermissions();
   }
 
-  async getAlbums(artistId: string): Promise<GenericAlbum[] | undefined> {
+  public async getAlbums(
+    artistId: string
+  ): Promise<GenericAlbum[] | undefined> {
     if (!this.spotifyToken) await this.authenticate();
     if (!this.spotifyToken) return;
     const combinedAlbums: SimplifiedAlbum[] = [];
     let next = true;
     let page = 0;
     while (next) {
-      const albums = await spotify?.artists.getArtistAlbums(artistId, {
+      const albums = await spotify.artists.getArtistAlbums(artistId, {
         limit: 50,
         offset: page * 50,
         include_groups: ["album", "single"],
       });
-      combinedAlbums.push(...(albums?.items ?? []));
-      next = !!albums?.next;
+      combinedAlbums.push(...albums.items);
+      next = !!albums.next;
       page++;
     }
 
@@ -82,32 +84,37 @@ export default class Music {
     }));
   }
 
-  async getSongs(albums: GenericAlbum[]): Promise<GenericTrack[] | undefined> {
-    if (!this.spotifyToken) this.authenticate();
+  public async getSongs(
+    albums: GenericAlbum[]
+  ): Promise<GenericTrack[] | undefined> {
+    if (!this.spotifyToken) await this.authenticate();
     if (!this.spotifyToken) return;
-    const allSongs = albums.flatMap((album) => {
+    const songPromises = albums.flatMap((album) => {
       const currentMarket = window.navigator.language.split("-")[1] ?? "US";
       const validMarket = album.available_markets?.includes(currentMarket);
-      if (validMarket)
-        return spotify?.albums
-          .getAlbumTracks(album.id)
-          .then((tracks) =>
-            tracks?.items.map((track) => ({
+      return validMarket
+        ? spotify.albums.getAlbumTracks(album.id).then((tracks) =>
+            tracks.items.map((track) => ({
               ...track,
               album,
             }))
           )
-          .catch(() => undefined);
-      else return undefined;
+        : undefined;
     });
 
-    return (await Promise.all(allSongs)).flatMap((x) => x ?? []);
+    const allSongs = await Promise.all(songPromises);
+    return allSongs.flatMap((x) => x ?? []);
   }
 
-  async playSong(song: GenericTrack) {
+  public async playSong(song: GenericTrack) {
     if (!this.spotifyToken) await this.authenticate();
     if (!this.spotifyToken) return;
-    if (!this.isPremium) {
+    if (this.isPremium) {
+      // hate this plugin ngl. it's not very good
+      // eslint-disable-next-line scanjs-rules/call_connect
+      if (!player.ready) await player.connect(this.spotifyToken);
+      await player.play(song.uri);
+    } else {
       fallbackAudio.src = song.preview_url || "";
       fallbackAudio.volume = 0;
       await fallbackAudio.play();
@@ -120,32 +127,27 @@ export default class Music {
         fallbackAudio.volume = Math.min(1, fallbackAudio.volume + 1 / steps);
       }, fadeTime / steps);
       setTimeout(() => clearInterval(fade), fadeTime);
-    } else {
-      if (!player.ready) await player.connect(this.spotifyToken);
-      await player.play(song.uri);
     }
 
     this.dispatchStateChange({ paused: false, currentSong: song });
   }
 
-  async pause() {
+  public async pause() {
     if (!this.spotifyToken) await this.authenticate();
     if (!this.spotifyToken) return;
-    if (!this.isPremium) {
-      await fallbackAudio.pause();
-    } else {
+    if (this.isPremium) {
       if (player.playing) await player.pause();
+    } else {
+      fallbackAudio.pause();
     }
     this.dispatchStateChange({ paused: true });
   }
 
-  stateCallbacks: ((state: MusicState) => void)[] = [];
-
-  onStateChange(callback: (state: MusicState) => void) {
+  public onStateChange(callback: (state: MusicState) => void) {
     this.stateCallbacks.push(callback);
   }
 
-  offStateChange(callback: (state: MusicState) => void) {
+  public offStateChange(callback: (state: MusicState) => void) {
     this.stateCallbacks = this.stateCallbacks.filter((cb) => cb !== callback);
   }
 
@@ -154,9 +156,12 @@ export default class Music {
   }
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
-export type MusicState = {
+export interface MusicState {
   paused: boolean;
   currentSong?: GenericTrack;
-};
+}

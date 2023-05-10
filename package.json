@@ -3,19 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@tanstack/react-query": "^4.28.0",
+    "@tanstack/react-query": "^4.29.5",
     "@types/elo-rank": "^1.0.1",
-    "@types/node": "^18.15.11",
-    "@types/react": "^18.0.33",
-    "@types/react-dom": "^18.0.11",
+    "@types/node": "^20.1.1",
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
+    "@types/styled-components": "^5.1.26",
     "elo-rank": "^1.0.4",
+    "eslint-config-reform-collective": "^2.0.0-rc9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "react-use": "^17.4.0",
     "spotify-web-api-ts": "^1.4.5",
     "spotify-web-playback": "^1.4.0",
-    "styled-components": "^5.3.9",
+    "styled-components": "^5.3.10",
+    "stylelint-config-reform-collective": "^1.0.0",
     "typescript": "^5.0.4"
   },
   "overrides": {
@@ -30,21 +33,21 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": "reform-collective",
+    "rules": {
+      "ssr-friendly/no-dom-globals-in-module-scope": "off"
+    }
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "stylelint": {
+    "extends": "stylelint-config-reform-collective"
+  },
+  "browserslist": [
+    "last 99 chrome versions and last 1 year",
+    "last 99 ChromeAndroid versions and last 1 year",
+    "last 99 Safari versions and last 1 year",
+    "last 99 iOS versions and last 1 year",
+    "last 99 firefox versions and last 1 year",
+    "last 99 FirefoxAndroid versions and last 1 year",
+    ">0.15% and last 1 year"
+  ]
 }

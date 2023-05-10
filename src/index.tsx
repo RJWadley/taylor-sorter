@@ -1,17 +1,18 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./App";
-import SpotifyProvider from "components/SpotifyProvider";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import SpotifyProvider from "components/SpotifyProvider";
+import React from "react";
+import { createRoot } from "react-dom/client";
+
+import App from "./App";
 
 const queryClient = new QueryClient();
 
-const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
-);
+const rootEl = document.querySelector("#root");
+const root = rootEl ? createRoot(rootEl) : undefined;
 
-root.render(
+root?.render(
   <React.StrictMode>
     <SpotifyProvider>
       <QueryClientProvider client={queryClient}>

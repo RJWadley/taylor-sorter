@@ -3,9 +3,9 @@ import Music from "utils/music/music";
 
 export const SpotifyContext = createContext<Music | null>(null);
 
-type Props = {
+interface Props {
   children: React.ReactNode;
-};
+}
 
 const MusicProvider = ({ children }: Props) => {
   const music = useMemo(() => new Music(), []);

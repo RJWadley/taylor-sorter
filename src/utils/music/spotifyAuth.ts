@@ -15,7 +15,7 @@ const SPOTIFY_SCOPES: AuthorizationScope[] = [
 function generateRandomString() {
   const length = 128;
   let text = "";
-  let possible =
+  const possible =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
   for (let i = 0; i < length; i++) {
@@ -32,6 +32,8 @@ function generateRandomString() {
 async function generateCodeChallenge(codeVerifier: string) {
   const encoder = new TextEncoder();
   const data = encoder.encode(codeVerifier);
+  // this is what spotify recommends
+  // eslint-disable-next-line scanjs-rules/property_crypto
   const digest = await window.crypto.subtle.digest("SHA-256", data);
 
   return base64encode(digest);
@@ -44,11 +46,11 @@ async function generateCodeChallenge(codeVerifier: string) {
  */
 function base64encode(buffer: ArrayBuffer) {
   let binary = "";
-  let bytes = new Uint8Array(buffer);
-  let len = bytes.byteLength;
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
 
   for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i] ?? 0);
+    binary += String.fromCodePoint(bytes[i] ?? 0);
   }
 
   return window
@@ -66,18 +68,18 @@ export const grantSpotifyPermissions = async () => {
   const codeChallenge = await generateCodeChallenge(codeVerifier);
   localStorage.setItem("codeVerifier", codeVerifier);
 
-  let scope = SPOTIFY_SCOPES.join(" ");
+  const scope = SPOTIFY_SCOPES.join(" ");
 
-  let args = new URLSearchParams({
+  const args = new URLSearchParams({
     response_type: "code",
     client_id: CLIENT_ID,
-    scope: scope,
+    scope,
     redirect_uri: REDIRECT_URI,
     code_challenge_method: "S256",
     code_challenge: codeChallenge,
   });
 
-  let url = `https://accounts.spotify.com/authorize?${args.toString()}`;
+  const url = `https://accounts.spotify.com/authorize?${args.toString()}`;
 
   window.location.replace(url);
 };
@@ -104,13 +106,13 @@ export const authSpotifyWithRefreshToken = async (
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: body,
+    body,
   })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("HTTP status " + response.status);
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP status ${res.status}`);
       }
-      return response.json();
+      return res.json();
     })
     .then((data: SpotifyResponse) => {
       return data;
@@ -134,7 +136,7 @@ export const authSpotifyWithRefreshToken = async (
 export const authWithCode = async (code: string, codeVerifier: string) => {
   console.log("authorizing with code");
 
-  let body = new URLSearchParams({
+  const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
     redirect_uri: REDIRECT_URI,
@@ -148,13 +150,13 @@ export const authWithCode = async (code: string, codeVerifier: string) => {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: body,
+    body,
   })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("HTTP status " + response.status);
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP status ${res.status}`);
       }
-      return response.json();
+      return res.json();
     })
     .then((data: SpotifyResponse) => {
       return data;

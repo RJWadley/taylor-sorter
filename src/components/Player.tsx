@@ -1,7 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { SpotifyContext } from "./SpotifyProvider";
 import { MusicState } from "utils/music/music";
 import { GenericTrack } from "utils/music/types";
+
+import { SpotifyContext } from "./SpotifyProvider";
 
 export default function Player({ song }: { song?: GenericTrack }) {
   const music = useContext(SpotifyContext);
@@ -11,17 +12,19 @@ export default function Player({ song }: { song?: GenericTrack }) {
   const togglePlayback = async () => {
     if (isCooldown.current) return;
     isCooldown.current = true;
-    setTimeout(() => (isCooldown.current = false), 1000);
+    setTimeout(() => {
+      isCooldown.current = false;
+    }, 1000);
 
     if (playing) {
-      music?.pause();
+      await music?.pause();
     } else if (song) {
-      music?.playSong(song);
+      await music?.playSong(song);
     }
   };
 
   useEffect(() => {
-    music?.pause();
+    music?.pause().catch(console.error);
     setPlaying(false);
     const changeState = (state: MusicState) => {
       setPlaying(!state.paused && state.currentSong?.uri === song?.uri);
@@ -31,5 +34,13 @@ export default function Player({ song }: { song?: GenericTrack }) {
     return () => music?.offStateChange(changeState);
   }, [music, song?.uri]);
 
-  return <button onClick={togglePlayback}>{playing ? "Pause" : "Play"}</button>;
+  return (
+    <button
+      onClick={() => {
+        togglePlayback().catch(console.error);
+      }}
+    >
+      {playing ? "Pause" : "Play"}
+    </button>
+  );
 }

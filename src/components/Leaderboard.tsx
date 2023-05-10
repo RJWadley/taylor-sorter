@@ -20,10 +20,10 @@ export default function Leaderboard({
 
   return (
     <>
-      <br></br>
-      <br></br>
-      <br></br>
-      <br></br>
+      <br />
+      <br />
+      <br />
+      <br />
       <button onClick={() => setSimpleRank(true)}>Simple Rank</button>
       <button onClick={() => setSimpleRank(false)}>Detailed Rank</button>
       {simpleRank

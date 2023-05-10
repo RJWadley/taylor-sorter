@@ -19,12 +19,12 @@ export default function useTaylorSongs(): readonly GenericTrack[] {
     queryKey: ["taylorAlbums", !!music, !!spotify?.getAccessToken()],
     queryFn: async () => {
       if (!music) return [];
-      const combinedAlbums = await music?.getAlbums(TAYLOR_ID);
+      const combinedAlbums = await music.getAlbums(TAYLOR_ID);
       if (!combinedAlbums) return [];
 
       // filter out albums that aren't taylors version if a taylors version exists
       const taylorsVersionAlbums = combinedAlbums.filter((album) => {
-        if (album.name.match(/Taylor(’|')s Version/)) return true;
+        if (/Taylor(’|')s Version/.test(album.name)) return true;
         if (
           TAYLORS_VERSIONS.some((v) => album.name.toLowerCase().includes(v))
         ) {
@@ -57,7 +57,7 @@ export default function useTaylorSongs(): readonly GenericTrack[] {
           if (
             album.name.toLowerCase().includes("version") &&
             // don't filter out tv
-            !album.name.match(/Taylor(’|')s Version/) &&
+            !/Taylor(’|')s Version/.test(album.name) &&
             !album.name.toLowerCase().includes("deluxe version") &&
             // don't filter out acoustic
             !album.name.toLowerCase().includes("acoustic")
@@ -72,12 +72,10 @@ export default function useTaylorSongs(): readonly GenericTrack[] {
       });
 
       // filter out albums with the exact same name
-      const deDupedAlbums = filteredAlbums.filter(
+      return filteredAlbums.filter(
         (album, index, self) =>
           self.findIndex((a) => a.name === album.name) === index
       );
-
-      return deDupedAlbums;
     },
   });
 
@@ -95,11 +93,7 @@ export default function useTaylorSongs(): readonly GenericTrack[] {
 
   const sortOrder = localStorage.getItem("sortOrder")?.split(",");
 
-  if (!sortOrder) {
-    const shuffled = shuffle(songs ?? []);
-    localStorage.setItem("sortOrder", shuffled.map((s) => s.id).join(","));
-    return dedupe(shuffled);
-  } else {
+  if (sortOrder) {
     // match the order in the local storage
     const sortFunction = (a: GenericTrack, b: GenericTrack) => {
       const aIndex = sortOrder.indexOf(a.id);
@@ -113,5 +107,9 @@ export default function useTaylorSongs(): readonly GenericTrack[] {
     };
 
     return dedupe(songs.sort(sortFunction));
+  } else {
+    const shuffled = shuffle(songs ?? []);
+    localStorage.setItem("sortOrder", shuffled.map((s) => s.id).join(","));
+    return dedupe(shuffled);
   }
 }
