@@ -6,6 +6,7 @@ import styled from "styled-components";
 import Leaderboard from "./Leaderboard";
 import PlayButton from "./PlayButton";
 import Player from "./Player";
+import PrimaryButton from "./PrimaryButton";
 import SongCard from "./SongCard";
 
 export default function SongComparison() {
@@ -32,6 +33,7 @@ export default function SongComparison() {
     <>
       <Wrapper>
         <TopRow>
+          <div />
           <ProgressBar progress={progress * 100}>
             <div>
               {progress.toLocaleString(undefined, {
@@ -41,6 +43,9 @@ export default function SongComparison() {
               Sorted
             </div>
           </ProgressBar>
+          <PrimaryButton onClick={undo} icon="undo">
+            Undo
+          </PrimaryButton>
         </TopRow>
         <Cards>
           <SongCard
@@ -52,7 +57,6 @@ export default function SongComparison() {
             onClick={() => selectItem(songB, songA)}
           />
         </Cards>
-        <button onClick={undo}>Undo</button>
         <BottomRow>
           <PlayButton track={songInfoA} />
           <PlayButton track={songInfoB} />
@@ -78,8 +82,11 @@ const Wrapper = styled.div`
 `;
 
 const TopRow = styled.div`
-  display: flex;
+  display: grid;
   justify-content: center;
+  gap: 10px;
+  grid-template-columns: 1fr auto 1fr;
+  place-items: end;
 `;
 
 const ProgressBar = styled.div<{
