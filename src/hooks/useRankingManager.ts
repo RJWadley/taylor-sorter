@@ -247,7 +247,16 @@ export default function useRankingManager(items: readonly string[]) {
     selectNextSongs();
   };
 
-  return { nextTwoItems, selectItem, scores, simpleRanking, progress };
+  /**
+   * undo the last comparison
+   */
+  const undo = () => {
+    matchUps.pop();
+    localStorage.setItem("matchUps", JSON.stringify(matchUps));
+    selectNextSongs();
+  };
+
+  return { nextTwoItems, selectItem, scores, simpleRanking, progress, undo };
 }
 
 /**

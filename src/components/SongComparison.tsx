@@ -11,7 +11,7 @@ import SongCard from "./SongCard";
 export default function SongComparison() {
   const songs = useTaylorSongs();
 
-  const { nextTwoItems, selectItem, progress, scores, simpleRanking } =
+  const { nextTwoItems, selectItem, progress, scores, simpleRanking, undo } =
     useRankingManager(songs.map((song) => song.name));
 
   const [songA, songB] = nextTwoItems ?? [];
@@ -52,6 +52,7 @@ export default function SongComparison() {
             onClick={() => selectItem(songB, songA)}
           />
         </Cards>
+        <button onClick={undo}>Undo</button>
         <BottomRow>
           <PlayButton track={songInfoA} />
           <PlayButton track={songInfoB} />
@@ -76,7 +77,10 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const TopRow = styled.div``;
+const TopRow = styled.div`
+  display: flex;
+  justify-content: center;
+`;
 
 const ProgressBar = styled.div<{
   progress: number;

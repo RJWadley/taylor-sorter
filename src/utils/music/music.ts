@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SpotifyWebApi } from "spotify-web-api-ts";
-import SpotifyPlayer from "spotify-web-playback";
+import SpotifyPlayer, { SpotifyWebPlaybackState } from "spotify-web-playback";
 
 import {
   authSpotifyWithRefreshToken,
@@ -18,6 +18,7 @@ export default class Music {
   private spotifyToken?: string;
   private isPremium = false;
   private stateCallbacks: ((state: MusicState) => void)[] = [];
+  private seekCooldown: NodeJS.Timeout | null = null;
 
   public async authenticate() {
     const codeVerifier = localStorage.getItem("codeVerifier");
@@ -140,7 +141,12 @@ export default class Music {
     if (!this.spotifyToken) await this.authenticate();
     if (!this.spotifyToken) return;
     if (this.isPremium) {
-      await player.seek(seconds * 1000);
+      if (!this.seekCooldown) {
+        this.seekCooldown = setTimeout(() => {
+          this.seekCooldown = null;
+        }, 500);
+        await player.seek(seconds * 1000);
+      }
     } else {
       fallbackAudio.currentTime = seconds;
     }
@@ -173,25 +179,46 @@ export const useMusicProgress = () => {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [needToTrack, setNeedToTrack] = useState(false);
 
   useEffect(() => {
-    player.addListener("state", (state) => {
+    const onSpotifyState = (state: SpotifyWebPlaybackState | null) => {
       if (!state) return;
+      setNeedToTrack(true);
       setProgress(Math.round(state.position / 1000));
       setDuration(Math.round(state.duration / 1000));
       setIsPlaying(!state.paused);
-    });
+    };
+    const onFallbackState = () => {
+      setNeedToTrack(false);
+      const totalLength = Math.round(fallbackAudio.duration);
+      setProgress(Math.round(fallbackAudio.currentTime));
+      setDuration(Number.isNaN(totalLength) ? 100 : totalLength);
+      setIsPlaying(!fallbackAudio.paused);
+    };
+
+    player.addListener("state", onSpotifyState);
+    fallbackAudio.addEventListener("timeupdate", onFallbackState);
+    fallbackAudio.addEventListener("pause", onFallbackState);
+    fallbackAudio.addEventListener("play", onFallbackState);
+    return () => {
+      player.removeListener("state", onSpotifyState);
+      fallbackAudio.removeEventListener("timeupdate", onFallbackState);
+      fallbackAudio.removeEventListener("pause", onFallbackState);
+      fallbackAudio.removeEventListener("play", onFallbackState);
+    };
   }, []);
 
   useEffect(() => {
     // if the music is playing, update the progress every second
+    if (!needToTrack) return;
     if (isPlaying) {
       const interval = setInterval(() => {
         setProgress((p) => p + 1);
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [isPlaying]);
+  }, [isPlaying, needToTrack]);
 
   return { progress, duration };
 };
